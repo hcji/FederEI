@@ -1,38 +1,32 @@
-# FederEI
 ## create env with docker
 
 ### center 
-open two port
-```
-sudo iptables -A INPUT -p tcp --dport port1 -j ACCEPT
-sudo iptables -A INPUT -p tcp --dport port2 -j ACCEPT
-```
-check the ip address
-```
-ifconfig
-```
+
+
 pull the docker image
 ```
 docker pull kpbl1/federei:v1
 ```
+get ip
+```
+ifconfig
+```
+export two port
+```
+sudo iptables -A INPUT -p tcp --dport port1 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport port2 -j ACCEPT
+```
 run image and center server
 ```
 docker run -i -p port1:port1 -p port2:port2 federei:v1
-python3.8 /app/center.py yourip port1 port2
+python3.8 /app/center.py center_ip port1 port2
 ```
 
 ### client
 client should be run after center
 
-open two port
-```
-sudo iptables -A INPUT -p tcp --dport port1 -j ACCEPT
-sudo iptables -A INPUT -p tcp --dport port2 -j ACCEPT
-```
-check the ip address
-```
-ifconfig
-```
+
+
 pull the docker image
 ```
 docker pull kpbl1/federei:v1
@@ -49,13 +43,21 @@ copy database into container
 ```
 docker cp your_database_path container_id:/app
 ```
-
+get  ip 
+```
+ifconfig
+```
+export two port
+```
+sudo iptables -A INPUT -p tcp --dport port1 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport port2 -j ACCEPT
+```
 ```
 docker attach container_id
 ```
 run client server
 ```
-python3.8 /app/client.py center_address center_port1 center_port2 client_address client_port1 client_port2
+python3.8 /app/client.py center_ip center_port1 center_port2 client_ip client_port1 client_port2 database_name
 ```
 
 ## create env with pip
