@@ -17,7 +17,12 @@ and return the final results to the corresponding user.
 
 ## Documentation
 
-[Documentation Website](https://hcji.github.io/FederEI)
+- [Installation and Deployment](https://hcji.github.io/FederEI/Installation_and_Deployment/)
+- [User Guide](https://hcji.github.io/FederEI/User_Guide/)
+- [Advanced Usage](https://hcji.github.io/FederEI/Advanced_Usage/)
+
+## Sources on GitHub
+[FederEI GitHub](https://github.com/hcji/FederEI)
 
 ## Changelog
 
@@ -28,5 +33,4 @@ and return the final results to the corresponding user.
 
 
 ## Contact
-- 1094137065@qq.com
 - jihongchao@caas.cn

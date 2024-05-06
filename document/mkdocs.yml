@@ -1,0 +1,9 @@
+site_name: FederEI
+theme:
+  name: material
+
+nav:
+    - Home: index.md
+    - Installation: Installation_and_Deployment.md
+    - User Guide: User_Guide.md
+    - Advanced Usage: Advanced_Usage.md

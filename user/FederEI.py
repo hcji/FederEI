@@ -15,6 +15,8 @@ import pandas as pd
 from platform import system
 
 import rdkit
+import rdkit.Chem
+import rdkit.Chem.Draw
 import PyQt5
 
 import PyQt5.Qt
