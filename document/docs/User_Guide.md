@@ -67,7 +67,7 @@ The compound structure will also be displayed.
 
 ## Operation demonstration
 
-https://github.com/hcji/FederEI/assets/17610691/b50269d6-334d-4fc9-b5bf-1470e9e3e60f
+![type:video](https://github.com/hcji/FederEI/assets/17610691/b50269d6-334d-4fc9-b5bf-1470e9e3e60f)
 
 ## Saving results
 Result files will automatically be saved in the same folder as the FederEI.exe file. 
