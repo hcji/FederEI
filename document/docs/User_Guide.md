@@ -66,7 +66,8 @@ Clicking the query data will display the results. Clicking on a result will show
 The compound structure will also be displayed.
 
 ## Operation demonstration
-<video controls src="2024-05-06 10-31-01.mp4" controls="controls" width="1000" height="680"></video>
+
+![type:video](./2024-05-06-10-31-01.mp4)
 
 ## Saving results
 Result files will automatically be saved in the same folder as the FederEI.exe file. 

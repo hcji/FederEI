@@ -7,3 +7,6 @@ nav:
     - Installation: Installation_and_Deployment.md
     - User Guide: User_Guide.md
     - Advanced Usage: Advanced_Usage.md
+
+plugins:
+    - mkdocs-video
