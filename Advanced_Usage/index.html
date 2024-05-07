@@ -411,21 +411,27 @@
 
 <h1 id="advanced-usage">Advanced Usage</h1>
 <h2 id="adding-a-client-server">Adding a Client-Server</h2>
-<p>Simply run the client server, and it will be automatically added to the registry table.</p>
+<p>To add the Client-Server,please follow the steps outlined in the Installation document after starting the Center-Server. Once the Client is launched, it will be automatically registered in the Center-Server's registry table and begin functioning.</p>
 <h2 id="changing-the-library">Changing the Library</h2>
 <p>To change the library, follow these steps:</p>
-<ul>
-<li>Copy your database into the container.</li>
-<li>Rerun the client server.</li>
-</ul>
-<pre><code>docker cp your_database_path container_id:/app
+<p>If it's already running, you'll need to stop it first and detach the container.</p>
+<pre><code>docker attach container_id
+crtl+c
+crtl+p,crtl+q
+</code></pre>
+<p>Then, copy the library into the container and restart it.</p>
+<pre><code>docker cp your_library_path container_id:/app
 docker attach container_id
 python3.8 /app/client.py central_ip center_port1 center_port2 client_ip client_port1 client_port2 database_name
 </code></pre>
 <h3 id="library-format">Library format</h3>
-<p>Library data supports <em>.pickle</em> and <em>.mgf</em> types. It should contain at least the following information:</p>
+<p>Library data supports <em>.pickle</em> and <em>.mgf</em> types.The program will automatically generate the vectors required for searching based on the provided Library. The following information for each compound in the Library is required when returning results,ensure that each compound in the Library contains at least this information: </p>
 <pre><code>SMILES
 Compound Name
+</code></pre>
+<p>If you want to modify the information returned in the search results, you can follow the format below to modify the information returned in Client.py for mgf results:</p>
+<pre><code>mgf_data['compound_name']=sorted_cleaned_pkl_data[I[index1][index2]].metadata['compound_name']
+mgf_data['smiles']=sorted_cleaned_pkl_data[I[index1][index2]].metadata['smiles']
 </code></pre>
 
 

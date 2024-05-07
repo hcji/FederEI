@@ -304,6 +304,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#operation-demonstration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Operation demonstration
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#saving-results" class="md-nav__link">
     <span class="md-ellipsis">
       Saving results
@@ -394,6 +403,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#operation-demonstration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Operation demonstration
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#saving-results" class="md-nav__link">
     <span class="md-ellipsis">
       Saving results
@@ -468,9 +486,20 @@ END IONS
 <p><a href="https://postimg.cc/7C5LkS5C"><img alt="image-2.png" src="https://i.postimg.cc/s2cG5cyJ/image-2.png" /></a></p>
 <p>Clicking the query data will display the results. Clicking on a result will show a comparison of mass spectra. 
 The compound structure will also be displayed.</p>
+<h2 id="operation-demonstration">Operation demonstration</h2>
+<video controls src="2024-05-06 10-31-01.mp4" title="Title"></video>
+
 <h2 id="saving-results">Saving results</h2>
-<p>Result files will automatically be saved in the same folder as the FederEI.exe file. 
-Each result is renamed according to the query time and contains all query data.</p>
+<p>Result files will automatically be saved in the same folder as the FederEI.exe file. </p>
+<p>The filename consists of a random number and the query time, designed to prevent overlapping results with the same name.</p>
+<p>The file content includes the query results for all compounds. This .mgf file contains the following information:</p>
+<pre><code>smiles
+compound_name
+distance
+origin_name
+ms
+</code></pre>
+<p>SMILES, compound_name, and MS come from the corresponding compounds in the Library, while "distance" indicates the gap between the queried compound and the corresponding compound in the Library. "origin_name" is the name of the queried compound. If <em>.csv</em> or <em>.txt</em> file is used for the query, it corresponds to the filename; if an .mgf file is used, it corresponds to the original compound name.</p>
 
 
 
