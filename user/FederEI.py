@@ -5,6 +5,7 @@ Created on Wed Jan 19 07:45:36 2022
 @author: jihon
 """
 import csv
+import json
 import random
 import socket
 import struct
@@ -18,6 +19,10 @@ import rdkit
 import rdkit.Chem
 import rdkit.Chem.Draw
 import PyQt5
+
+#import rdkit.DataStructs.TanimotoSimilarity
+
+import rdkit.Chem.AllChem
 
 import PyQt5.Qt
 import matplotlib
@@ -33,7 +38,11 @@ sys.path.append("../..")
 from sklearn.preprocessing import minmax_scale, maxabs_scale
 from pyteomics.mgf import MGF
 from typing import Optional
-
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
 
 from FastEI_ import Ui_Form
 
@@ -55,6 +64,82 @@ def load_from_mgf(filename: str) :
 
         yield Spectrum(mz=mz, intensities=intensities, metadata=metadata)
 
+def jiegouxiangsi(smiles1,smiles2): 
+    mol1 = rdkit.Chem.MolFromSmiles(smiles1) 
+    mol2 = rdkit.Chem.MolFromSmiles(smiles2) 
+  
+    fp1 = rdkit.Chem.AllChem.GetMorganFingerprintAsBitVect(mol1, 2, nBits=2048) 
+    fp2 = rdkit.Chem.AllChem.GetMorganFingerprintAsBitVect(mol2, 2, nBits=2048) 
+ 
+    tanimoto_score = rdkit.DataStructs.TanimotoSimilarity(fp1, fp2) 
+    return tanimoto_score 
+
+def receive_json(client_socket, sym_key):
+    iv = client_socket.recv(16)
+    msg_size = int.from_bytes(client_socket.recv(8), 'big')
+    encrypted_data = b""
+    while len(encrypted_data) < msg_size:
+        packet = client_socket.recv(4096)
+        if not packet:
+            break
+        encrypted_data += packet
+
+    decryptor = Cipher(
+        algorithms.AES(sym_key),
+        modes.CFB(iv),
+        backend=default_backend()
+    ).decryptor()
+    data = decryptor.update(encrypted_data) + decryptor.finalize()
+    
+    return json.loads(data.decode('utf-8'))
+
+def send_json(client_socket, sym_key, data):
+    iv = os.urandom(16)
+    json_data = json.dumps(data).encode('utf-8')
+    encryptor = Cipher(
+        algorithms.AES(sym_key),
+        modes.CFB(iv),
+        backend=default_backend()
+    ).encryptor()
+    encrypted_data = encryptor.update(json_data) + encryptor.finalize()
+
+    client_socket.send(iv)
+    client_socket.send(len(encrypted_data).to_bytes(8, 'big'))
+    client_socket.sendall(encrypted_data)
+
+def recv_public_send_symkey(client_socket):
+    public_pem = client_socket.recv(1024)
+    public_key = serialization.load_pem_public_key(public_pem, backend=default_backend())
+
+    sym_key = os.urandom(32)
+    encrypted_sym_key = public_key.encrypt(
+        sym_key,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    client_socket.send(encrypted_sym_key)
+    return sym_key
+
+
+def receive_file(client_socket, sym_key):
+    json_data = receive_json(client_socket, sym_key)
+    file_content = json_data["file_content"].encode('utf-8')
+    file_name = json_data["file_name"]
+
+    return file_name, file_content
+
+def send_file(client_socket, sym_key, file_path):
+    with open(file_path, "rb") as f:
+        file_content = f.read()
+    file_name = os.path.basename(file_path)
+    json_data = {
+        "file_name": file_name,
+        "file_content": file_content.decode('utf-8')
+    }
+    send_json(client_socket, sym_key, json_data)
 
 class Spikes:
     """
@@ -370,7 +455,7 @@ class FastEI(PyQt5.QtWidgets.QWidget, Ui_Form):
 
         self.pushButtonIndex.clicked.connect(self.retrieve_targets)
         self.pushButtonQue.clicked.connect(self.InputQuery)
-        
+        self.pushButtonCal.clicked.connect(self.calculate_struct_simi)
 
         self.listWidgetQue.itemClicked.connect(self.ViewResult)
         self.tableWidgetRes.itemClicked.connect(self.PlotResult)
@@ -378,6 +463,7 @@ class FastEI(PyQt5.QtWidgets.QWidget, Ui_Form):
         
         self.allButtons = [self.pushButtonIndex,
                            self.pushButtonQue,
+                           self.pushButtonCal,
                            ]
         
         self.QueryList = []
@@ -513,6 +599,9 @@ class FastEI(PyQt5.QtWidgets.QWidget, Ui_Form):
         #fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self,"Load", "","Model Files (*.model)", options=options)
         #if fileName:
         self.textBrowserMod.setText("0")
+    
+
+
 
     def InputQuery(self):
         self.Finished = False
@@ -583,6 +672,10 @@ class FastEI(PyQt5.QtWidgets.QWidget, Ui_Form):
                             mgf_file.write("END IONS\n")
                             mgf_file.write("\n")
                     
+            spectrums=list(load_from_mgf(mgfname));
+            if len(spectrums) >200 :
+                self.WarnMsg('Number of compounds exceeds limit 200')
+                return 
             self.ProcessBar(30, 'sending file...')
             
             
@@ -593,70 +686,47 @@ class FastEI(PyQt5.QtWidgets.QWidget, Ui_Form):
             except socket.error as msg:
                 print (msg)
                 return 
-                
             
-            print (s.recv(1024))
-
+            sym_key=recv_public_send_symkey(s)
+            send_file(s,sym_key,mgfname)
+            self.ProcessBar(50, 'sending sucess,waiting response...')
+            file_name,file_data = receive_file(s,sym_key)
+            with open(file_name, "wb") as f:
+                f.write(file_data)
+            s.close()
             
-            filepath=mgfname
 
-            if os.path.isfile(filepath):
-                
-                fhead = struct.pack('128sq', mgfname.encode('utf-8'), os.stat(filepath).st_size)
-                
-                s.send(fhead)
-
-                
-                fp = open(filepath, 'rb')
-                while 1:
-                    data = fp.read(1024)
-                    if not data:
-                        print ('{0} file send over...'.format(mgfname))
-                        break
-                    s.send(data)
-                
-                self.ProcessBar(50, 'sending sucess,waiting response...')
-
-                
-                while 1:
-                    
-                    fileinfo_size = struct.calcsize('128sq')
-                    
-                    buf = s.recv(fileinfo_size)
-                    
-                    if buf:
-                        
-                        filename, filesize = struct.unpack('128sq', buf)
-                        fn = filename.strip(b'\00')
-                        fn = fn.decode()
-                        print ('file new name is {0}, filesize if {1}'.format(str(fn),filesize))
-            
-                        recvd_size = 0  
-                        fp = open('./' + str(fn), 'wb')
-                        print ('start receiving...')
-                        
-                        
-                        while not recvd_size == filesize:
-                            if filesize - recvd_size > 1024:
-                                data = s.recv(1024)
-                                recvd_size += len(data)
-                            else:
-                                data = s.recv(filesize - recvd_size)
-                                recvd_size = filesize
-                            fp.write(data)
-                        fp.close()
-                        print ('end receive...')
-                    
-                    s.close()
-                    break
-            
-            self.resultpath=mgfname
+            self.resultpath=file_name
             self.Finished = True
 
             self.ProcessBar(100, 'receive file success')
 
         for s in self.allButtons:
             s.setEnabled(True)
+
+    def calculate_struct_simi(self):
+        if not self.Finished:
+            self.ErrorMsg('Please run program first!')
+            return
+        
+        selectItem = self.listWidgetQue.currentItem()
+        if not selectItem:
+            self.ErrorMsg('No item is selected!')
+            return
+        else:
+            selectItem = selectItem.text()
+
+        spectrums = list(load_from_mgf(self.resultpath))
+        spectrums = [s for s in spectrums if s.metadata['origin_name']==os.path.basename(selectItem)]
+
+        score=0.0
+        comp=spectrums[0].metadata
+        for i in spectrums[1:]:
+            jiegou=jiegouxiangsi(i.metadata['smiles'],comp['smiles'])
+            score+=jiegou
+        score=score/(len(spectrums)-1)
+        self.InforMsg("top1 struct similar is :"+str(score))
+
 
     def RunProgram(self):
         options = PyQt5.QtWidgets.QFileDialog.Options()
@@ -777,6 +847,7 @@ class FastEI(PyQt5.QtWidgets.QWidget, Ui_Form):
 
         
         spectrums = list(load_from_mgf(self.resultpath))
+        spectrums = [s for s in spectrums if s.metadata['origin_name']==os.path.basename(selectItem)]
         
         data={}
         data['Rank']=1 + np.arange(len(spectrums))
@@ -784,7 +855,7 @@ class FastEI(PyQt5.QtWidgets.QWidget, Ui_Form):
         data['CompID']=[s.metadata['compound_name'] for s in spectrums]
         data['SMILES']=[s.metadata['smiles'] for s in spectrums]
         
-        
+
         df = pd.DataFrame(data)
 
         

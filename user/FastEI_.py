@@ -50,11 +50,19 @@ class Ui_Form(object):
         font.setPointSize(10)
         self.pushButtonQue.setFont(font)
         self.pushButtonQue.setObjectName("pushButtonQue")
-        self.gridLayout.addWidget(self.pushButtonQue, 4, 0, 1, 1)
+        self.gridLayout.addWidget(self.pushButtonQue, 3, 0, 1, 1)
+
+        self.pushButtonCal = QtWidgets.QPushButton(Form)
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(10)
+        self.pushButtonCal.setFont(font)
+        self.pushButtonCal.setObjectName("pushButtonCal")
+        self.gridLayout.addWidget(self.pushButtonCal, 4, 0, 1, 1)
         
         self.listWidgetQue = QtWidgets.QListWidget(Form)
         self.listWidgetQue.setMinimumSize(QtCore.QSize(0, 350))
-        self.listWidgetQue.setMaximumSize(QtCore.QSize(16777215, 500))
+        self.listWidgetQue.setMaximumSize(QtCore.QSize(16777215, 600))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
@@ -146,8 +154,9 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
-        self.pushButtonIndex.setText(_translate("Form", "set_ip"))
+        self.pushButtonIndex.setText(_translate("Form", "Set IP"))
         self.pushButtonQue.setText(_translate("Form", "Query"))
+        self.pushButtonCal.setText(_translate("Form", "Confidence Score"))
         self.label.setText(_translate("Form", "Results"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("Form", "Spectrum"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("Form", "Structure"))
