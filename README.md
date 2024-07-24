@@ -21,7 +21,8 @@ and return the final results to the corresponding user.
 
 ## Changelog
 
-- verision 1.0: *first release* at 2024.04.30
+- version 1.0: *first release* at 2024.04.30
+- version 1.1: *add encryption during data transmission* at 2024.07.24
 
 ## Citations
 - [Yang, Q., Ji, H., Xu, Z. et al. Ultra-fast and accurate electron ionization mass spectrum matching for compound identification with million-scale in-silico library. Nat Commun 14, 3722 (2023)](https://doi.org/10.1038/s41467-023-39279-7)
