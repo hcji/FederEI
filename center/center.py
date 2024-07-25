@@ -40,7 +40,7 @@ public_pem = public_key.public_bytes(
 
 lock=threading.Lock()
 
-
+#收到连接请求后的服务器端加密处理，和recv_public_send_symkey操作对称
 def send_public_recv_symkey(client_socket,public_pem):
     client_socket.send(public_pem)
     encrypted_sym_key = client_socket.recv(256)
@@ -53,7 +53,7 @@ def send_public_recv_symkey(client_socket,public_pem):
         )
     )
     return sym_key
-
+#连接请求端的加密处理
 def recv_public_send_symkey(client_socket):
     public_pem = client_socket.recv(1024)
     public_key = serialization.load_pem_public_key(public_pem, backend=default_backend())
@@ -70,6 +70,7 @@ def recv_public_send_symkey(client_socket):
     client_socket.send(encrypted_sym_key)
     return sym_key
 
+#监听消息端口，用于子服务器的注册
 def message(server_file_addr,server_message_addr,file_email): 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((server_ip, server_port))
@@ -108,7 +109,7 @@ def message(server_file_addr,server_message_addr,file_email):
 
 
 
-
+#监听文件端口，处理所有文件的传输
 def socket_service(server_file_addr,server_message_addr,file_email):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -120,12 +121,13 @@ def socket_service(server_file_addr,server_message_addr,file_email):
         print (msg)
         sys.exit(1)
     print ('Waiting connection...')
- 
+    #收到连接请求后开一个新线程处理
     while 1:
         client_socket, client_address = s.accept()
-
+        
         t = threading.Thread(target=deal_data, args=(client_socket, client_address,server_file_addr,server_message_addr,file_email))
         t.start()
+        
 
 def jiegouxiangsi(smiles1,smiles2): 
     mol1 = Chem.MolFromSmiles(smiles1) 
@@ -138,7 +140,8 @@ def jiegouxiangsi(smiles1,smiles2):
     # 计算 Tanimoto 系数 
     tanimoto_score = TanimotoSimilarity(fp1, fp2) 
     return tanimoto_score         
- 
+
+#接收文件，并做对应处理
 def deal_data(client_socket, client_address,server_file_addr,server_message_addr,file_email):
 
     print(f"Connection from {client_address}")
@@ -152,7 +155,7 @@ def deal_data(client_socket, client_address,server_file_addr,server_message_addr
         with open(file_name, "ab") as f:
             f.write(file_data)
 
-    lock.acquire()
+    lock.acquire() #互斥锁，保证线程安全
     name=os.path.splitext(file_name)[0] 
     if name in file_email :
         file_email[name]+=1
@@ -164,7 +167,7 @@ def deal_data(client_socket, client_address,server_file_addr,server_message_addr
     if file_email[name]==0 :
         for i in server_file_addr:
             for address,port in i.items() :
-                #socket_client(str(fn),address,port)
+                
                 try:
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     s.connect((address, port))
@@ -205,34 +208,6 @@ def deal_data(client_socket, client_address,server_file_addr,server_message_addr
         except:
             print("remove cache fail")
 
-
-def socket_client(filepath,address,port):
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((address, port))
-    except socket.error as msg:
-        print (msg)
-        sys.exit(1)
-
-
-
-    if os.path.isfile(filepath):
-
-        fileinfo_size = struct.calcsize('128sl')
-
-        fhead = struct.pack('128sl', os.path.basename(filepath).encode('utf-8'), os.stat(filepath).st_size)
-
-        s.send(fhead)
-
-        fp = open(filepath, 'rb')
-        while 1:
-            data = fp.read(1024)
-            if not data:
-                print ('{0} file send over...'.format(os.path.basename(filepath)))
-                break
-            s.send(data)
-
-        s.close()
 
 
 def receive_file(client_socket, sym_key):
@@ -292,13 +267,15 @@ def main():
 
 
     with Manager() as manager:
-        server_file_addr = manager.list()
-        server_message_addr = manager.list()
+        server_file_addr = manager.list() #记录接收文件信息的表
+        server_message_addr = manager.list() #记录子服务器地址的注册表
+                                                #两个变量被这两个进程和进程内的线程共享
         file_email = manager.dict()
 
         p1 = Process(target=message, args=(server_file_addr,server_message_addr,file_email))
         p2 = Process(target=socket_service, args=(server_file_addr,server_message_addr,file_email))
-
+        #创建两个进程分别监听两个端口，p1监听消息端口，p2监听文件端口
+        
         p1.start()
         p2.start()
 
